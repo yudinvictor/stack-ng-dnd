@@ -1,12 +1,21 @@
-import {Directive, ElementRef, Input} from '@angular/core';
+import {
+  AfterViewInit,
+  Directive,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Input,
+  Output,
+  Renderer2
+} from '@angular/core';
 import {NgDragAndDropService} from "./ng-drag-and-drop.service";
-import {DragIndicatorPosition} from "./ng-drag-and-drop.types";
+import {DndItem, DragIndicatorPosition, DragItemConfig} from "./ng-drag-and-drop.types";
 
 @Directive({
   selector: '[dndElement]'
 })
-export class NgDndElementDirective {
-  @Input() set dndItem(item: any) {
+export class NgDndElementDirective implements AfterViewInit {
+  @Input() set dndItem(item: DndItem) {
     this.item = item;
   }
 
@@ -18,26 +27,56 @@ export class NgDndElementDirective {
     this.dnd.itemToData.set(this.item, data);
   }
 
-  @Input() getNeighbors: (dndItem: any) => {before: any, after: any};
-  @Input() getParent: (dndItem: any) => any;
+  @Input() getNeighbors: (dndItem: DndItem) => {before: DndItem, after: DndItem};
+  @Input() getParent: (dndItem: DndItem) => DndItem;
+
+  crutchDragLeaveTarget: EventTarget;
+
+  @HostListener('dragenter', ['$event']) dragenter(e: DragEvent): void {
+    if (!this.dnd.checkCanDropIn(this.item)) {
+      return;
+    }
+    this.crutchDragLeaveTarget = e.target;
+    this.dnd.setDndContainer(this);
+  }
+
+  @HostListener('dragleave', ['$event']) dragleave(e: DragEvent): void {
+    if (this.crutchDragLeaveTarget == e.target){
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }
+
+  @HostListener('dragover', ['$event']) dragover(e: DragEvent): void {
+    if (!this.dnd.checkCanDropIn(this.item)) {
+      return;
+    }
+    this.recalcIndicator(e);
+  }
+
+  /******************/
+
+  @Input() dndConfig: DragItemConfig;
+
+  @Output() drop: EventEmitter<any> = new EventEmitter<any>();
+
+  @HostListener('dragstart', ['$event']) dragstart(e: DragEvent): void {
+    this.dnd.startDnd(this, e);
+    console.warn('dragstart', this.item);
+  }
+
+  @HostListener('dragend', ['$event']) dragend(e: DragEvent): void {
+    console.log('dragend');
+    // const res = this.dndService.getResult();
+    // this.drop.emit(res);
+  }
 
   item: any;
 
   constructor(
-    private elementRef: ElementRef,
+    private render2: Renderer2,
+    public elementRef: ElementRef,
     private dnd: NgDragAndDropService ) { }
-
-  calcLvl(item: any): number {
-    const parent = this.getParent(item);
-    if (parent == null) {
-      return 0;
-    }
-    return this.calcLvl(parent) + 1;
-  }
-
-  get lvl(): number {
-    return this.calcLvl(this.item);
-  }
 
   calcPosition(offsetX: number, offsetY: number): DragIndicatorPosition {
     const H = this.elementRef.nativeElement.offsetHeight;
@@ -58,8 +97,45 @@ export class NgDndElementDirective {
     return positions.length > 0 ? positions[0]: null;
   }
 
-  recalcIndicator(): void {
+  recalcIndicator(e: DragEvent): void {
+    const position = this.calcPosition(e.offsetX, e.offsetY);
 
+    if (!position) return;
+
+    if (position == 'inside') {
+      // TODO inside indicator
+      return;
+    }
+
+    const neighbors = this.getNeighbors(this.item);
+
+    let minLvl, maxLvl;
+
+    if (position == 'bottom') {
+      const tmp = this.dnd.calcPermissionLevelsBetweenContainers(this.item, neighbors.after);
+      minLvl = tmp.minLvl;
+      maxLvl = tmp.maxLvl;
+    }
+
+    if (position == 'top') {
+      const tmp = this.dnd.calcPermissionLevelsBetweenContainers(neighbors.before, this.item);
+      minLvl = tmp.minLvl;
+      maxLvl = tmp.maxLvl;
+    }
+
+    let lvl = this.dnd.getMouseLvl(e.clientX, e.clientY);
+
+    if (minLvl == -1) {
+      lvl = -1;
+    } else {
+      lvl = Math.max(lvl, minLvl);
+      lvl = Math.min(lvl, maxLvl);
+    }
+
+    this.dnd.setIndicator(this, position, lvl);
   }
 
+  ngAfterViewInit(): void {
+    this.render2.setStyle(this.elementRef.nativeElement, 'position', 'relative');
+  }
 }

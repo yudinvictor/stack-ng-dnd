@@ -12,20 +12,15 @@
 
       <div
         [style.padding-left.px]="12 * item.lvl"
+        dndElement
 
-        ngDragContainer
-        [dndId]="item.id"
-
-        [dndContainerName]="item.type"
-        [dndContainerData]="item"
-        [dndContainerLvl]="item.lvl"
-        [checkIsParent]="checkIsParent"
+        [dndItem]="item"
+        [dndItemType]="item.type"
+        [dndItemData]="item"
         [getNeighbors]="getNeighbors"
+        [getParent]="getParent"
 
-        ngDragItem
-        [dragItemConfig]="dndConfig"
-
-        (drop)="drop(item, $event)"
+        [dndConfig]="dndConfig"
         class="example-item">
         <app-example-item [item]="item"></app-example-item>
       </div>

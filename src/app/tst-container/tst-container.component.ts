@@ -69,39 +69,29 @@ export class TstContainerComponent implements OnInit {
       lvl: 0,
       parent_id: 'Folder 1',
     },
-  ]
+  ];
 
-  checkIsParent = (parentId: string, childId: string): boolean => {
-    let tmpId = childId;
+  getParent = (item: any): any => {
+    if (!item) return null
 
-    while (tmpId) {
-      if (tmpId == parentId) {
-        return true;
-      }
-      const e = this.items.find(item => item.id == tmpId);
-      if (e) {
-        tmpId = e.parent_id;
-      } else {
-        break;
-      }
+    const idx = this.items.findIndex(e => e.id == item.parent_id);
+    if (idx == -1) {
+      return null;
     }
-    return false;
+    return this.items[idx];
   }
 
-  getNeighbors = (targetContainerId: string): {beforeId: string, afterId: string} => {
-    const neighbors: {beforeId: string, afterId: string} = {
-      beforeId: null,
-      afterId: null,
+  getNeighbors = (target: any): {before: any, after: any} => {
+    const neighbors  = {
+      before: null,
+      after: null,
     };
 
-    const idx = this.items.findIndex(item => item.id == targetContainerId);
-    if (idx == -1) {
-      return neighbors;
+    const idx = this.items.findIndex(e => e.id == target.id);
+    if (idx != -1) {
+      neighbors.before = idx > 0 ? this.items[idx - 1] : null;
+      neighbors.after = idx < this.items.length - 1 ? this.items[idx + 1] : null;
     }
-
-
-    neighbors.beforeId = idx > 0 ? this.items[idx - 1].id : null;
-    neighbors.afterId = idx < this.items.length - 1 ? this.items[idx + 1].id : null;
 
     return neighbors;
   }
@@ -143,27 +133,9 @@ export class TstContainerComponent implements OnInit {
     return result;
   }
 
-
-  dndFolder: DragItemConfig = {
-    nestedShift: 12,
-    containers: {
-      Folder: {
-        positions: ['inside', 'top', 'bottom'],
-        canNested: true,
-      },
-    }
-  }
-
-  dndChannel: any = {
-
-  }
-
   dndConfig: DragItemConfig = {
-    nestedShift: 8,
+    offsetOneLvlPx: 8,
     containers: {
-      task: {
-        positions: ['bottom', 'top'],
-      },
       Folder: {
         positions: ['bottom', 'top'],
       },
@@ -176,15 +148,6 @@ export class TstContainerComponent implements OnInit {
 
   drop(item: Item, data: DndResult): void {
     console.log(data);
-    // if (!data?.after?.index) {
-    //   item.index = data.before.index + 2;
-    // } else if (!data?.before?.index) {
-    //   item.index = data.after.index - 2;
-    // } else {
-    //   item.index = (data.after.index + data.before.index) / 2;
-    // }
-
-    // this.tasks.sort((a, b) => a.index - b.index)
   }
 
   constructor() { }

@@ -1,12 +1,21 @@
-import {Injectable, Renderer2, RendererFactory2} from '@angular/core';
+import {Injectable, Input, Renderer2, RendererFactory2} from '@angular/core';
 import {max, min} from "rxjs";
 import {
+  DndItem,
   DndResult, DndResultDataNeighbors,
   DragIndicatorPosition,
   DragItemConfig,
   DragItemConfigInContainer
 } from "./ng-drag-and-drop.types";
+import {NgDndElementDirective} from "./ng-dnd-element.directive";
+import {DndIndicator} from "./dnd-indicator";
 
+interface DndTargetContainer {
+  item: any;
+  position: DragIndicatorPosition;
+  level: number;
+  ref: NgDndElementDirective;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -15,81 +24,91 @@ export class NgDragAndDropService {
   itemToType: Map<any, string> = new Map<any, string>();
   itemToData: Map<any, any> = new Map<any, any>();
 
-  idToElement: Map<string, HTMLElement> = new Map<string, HTMLElement>();
-  elementToId: WeakMap<HTMLElement, string> = new WeakMap<HTMLElement, string>();
+  config: DragItemConfig;
 
-  idToLvl: Map<string, number> = new Map<string, number>();
-  idToData: Map<string, any> = new Map<string, any>();
-  idToContainerName: Map<string, string> = new Map<string, string>();
+  CURSOR_CLIENT_START_POSITION = {x: 0, y: 0}
 
-  currentConfig: DragItemConfig;
+  target: DndTargetContainer;
 
-  shiftLvlPx: number = 12;
+  activeItem: NgDndElementDirective;
 
-  startLvl = 0;
+  indicator: DndIndicator;
 
-  activeDragItemId: string;
-
-  CURSOR_CLIENT_START_POSITION = {
-    x: 0,
-    y: 0,
-  }
-
-  targetContainerId: string = null;
-  targetPosition: DragIndicatorPosition = null;
-  targetLvl: number = 0;
-
-  getNeighbors: (targetId: string) => {beforeId: string, afterId: string};
+  getNeighbors: (dndItem: DndItem) => {before: DndItem, after: DndItem};
+  getParent: (dndItem: DndItem) => DndItem;
 
   private render2: Renderer2;
   constructor(rendererFactory: RendererFactory2) {
     this.render2 = rendererFactory.createRenderer(null, null);
+    this.indicator = new DndIndicator(this, this.render2);
   }
 
-  getItemConfig(item: any): DragItemConfigInContainer {
+  getItemConfig(item: DndItem): DragItemConfigInContainer {
     const type = this.itemToType.get(item);
-    return this.currentConfig.containers[type] ?? null;
+    return this.config.containers[type] ?? null;
   }
 
-  getConfigByContainer(nameContainer: string): DragItemConfigInContainer {
-    if (this.currentConfig.containers[nameContainer]) {
-      return this.currentConfig.containers[nameContainer];
-    }
-    return null;
+  checkCanDropIn(zone: DndItem): boolean {
+    const type = this.itemToType.get(zone);
+    return !!(this.config.containers[type] && this.config.containers[type]?.positions?.length);
   }
 
-  checkCanDropInContainer(containerName: string): boolean {
-    return !!(this.currentConfig.containers[containerName] && this.currentConfig.containers[containerName]?.positions?.length);
-  }
-
-  startDnd(itemId: string, config: DragItemConfig, event: DragEvent): void {
-    // reset previously result
-    this.targetContainerId = null;
-
-    this.activeDragItemId = itemId;
-    this.currentConfig = config;
+  startDnd(activeItemRef: NgDndElementDirective, event: DragEvent): void {
+    this.activeItem = activeItemRef;
+    this.config = activeItemRef.dndConfig;
 
     this.CURSOR_CLIENT_START_POSITION.x = event.clientX;
     this.CURSOR_CLIENT_START_POSITION.y = event.clientY;
   }
 
-  getCurrentLvl(clientX: number, clientY: number): number {
-    const step = 24;
+  setDndContainer(refDirective: NgDndElementDirective): void {
+    this.target = {
+      item: refDirective.item,
+      position: null,
+      level: -1,
+      ref: refDirective,
+    }
+
+    this.getParent = refDirective.getParent;
+    this.getNeighbors = refDirective.getNeighbors;
+  }
+
+  setIndicator(containerRef: NgDndElementDirective, position: DragIndicatorPosition, level: number): void {
+    if (!containerRef || !position || level < 0) {
+      this.target = null;
+    } else {
+      this.target = {
+        item: containerRef.item,
+        position,
+        level,
+        ref: containerRef,
+      }
+    }
+    this.indicator.updateIndicator(containerRef.elementRef.nativeElement, position, level);
+  }
+
+  getLevel(item: DndItem): number {
+    if (item == null) return -1;
+    return this.getLevel(this.getParent(item)) + 1;
+  }
+
+  getMouseLvl(clientX: number, clientY: number): number {
+    const offsetOneLvl = this.config.offsetOneLvlPx;
+    const level = this.getLevel(this.activeItem.item);
 
     if (clientX < this.CURSOR_CLIENT_START_POSITION.x) {
       const len = this.CURSOR_CLIENT_START_POSITION.x - clientX;
-      return this.startLvl - (len / step>>0);
+      return level - (len / offsetOneLvl>>0);
     } else {
       const len = clientX - this.CURSOR_CLIENT_START_POSITION.x;
-      const shift = (len / step>>0);
-      // console.log('getCurrentLvl', shift, this.startLvl, this.startLvl + shift);
-      return this.startLvl + shift;
+      const shift = (len / offsetOneLvl>>0);
+      return level + shift;
     }
   }
 
-  getPermissibleLevels(beforeId, afterId): {minLvl: number, maxLvl: number} {
-    const beforeLvl = beforeId ? this.idToLvl.get(beforeId) : null;
-    const afterLvl = afterId ? this.idToLvl.get(afterId) : null;
+  getPermissibleLevels(before, after): {minLvl: number, maxLvl: number} {
+    const beforeLvl = this.getLevel(before);
+    const afterLvl = this.getLevel(after);
 
     if (beforeLvl == null) {
       return {minLvl: 0, maxLvl: 0};
@@ -113,56 +132,35 @@ export class NgDragAndDropService {
     throw new Error('getPermissibleLevels not return value')
   }
 
-  /***************/
-
-
-
-
-  /***************/
-
-
-
-
-  getResult(): DndResult {
-    if (this.targetContainerId == null) {
-      return null;
-    }
-    const result: DndResult = {
-      position: this.targetPosition,
-      lvl: this.targetLvl,
-      target: {
-        id: this.targetContainerId,
-        data: this.idToData.get(this.targetContainerId),
-        HTMLElement: this.idToElement.get(this.targetContainerId),
-        lvl: this.idToLvl.get(this.targetContainerId),
-        containerName: this.idToContainerName.get(this.targetContainerId),
-      },
-      before: null,
-      after: null,
-    };
-
-    const {beforeId, afterId} = this.getNeighbors(this.targetContainerId);
-
-    if (beforeId) {
-      result.before = {
-        id: beforeId,
-        data: this.idToData.get(beforeId),
-        HTMLElement: this.idToElement.get(beforeId),
-        lvl: this.idToLvl.get(beforeId),
-        containerName: this.idToContainerName.get(beforeId),
+  checkIsParent(parent: DndItem, child: DndItem): boolean {
+    let tmp = child;
+    while (tmp) {
+      if (tmp == parent) {
+        return true;
       }
+      tmp = this.getParent(tmp);
+    }
+    return false;
+  }
+
+  calcPermissionLevelsBetweenContainers(before: DndItem, after: DndItem): {minLvl: number, maxLvl: number} {
+    const beforeLvl = this.getLevel(before);
+
+    let {minLvl, maxLvl} = this.getPermissibleLevels(before, after);
+
+    if (before == this.activeItem) {
+      maxLvl = Math.min(maxLvl, beforeLvl);
     }
 
-    if (afterId) {
-      result.after = {
-        id: afterId,
-        data: this.idToData.get(afterId),
-        HTMLElement: this.idToElement.get(afterId),
-        lvl: this.idToLvl.get(afterId),
-        containerName: this.idToContainerName.get(afterId),
-      }
+    if (this.checkIsParent(this.activeItem, before)) {
+      const activeDragItemLvl = this.getLevel(this.activeItem);
+      maxLvl = Math.min(maxLvl, activeDragItemLvl);
     }
 
-    return result;
+    if (minLvl == -1 || maxLvl == -1 || maxLvl < minLvl) {
+      return {minLvl: -1, maxLvl: -1};
+    }
+
+    return {maxLvl, minLvl};
   }
 }

@@ -7,7 +7,7 @@ export interface DragItemConfigInContainer {
 }
 
 export interface DragItemConfig {
-  nestedShift: number;
+  offsetOneLvlPx: number;
   containers: {[key: string] : DragItemConfigInContainer}
 }
 
@@ -26,3 +26,5 @@ export interface DndResult {
   target: DndResultDataNeighbors;
   after: DndResultDataNeighbors;
 }
+
+export type DndItem = any;
