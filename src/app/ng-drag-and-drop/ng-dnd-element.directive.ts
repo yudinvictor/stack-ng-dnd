@@ -51,6 +51,7 @@ export class NgDndElementDirective implements AfterViewInit {
     if (!this.dnd.checkCanDropIn(this.item)) {
       return;
     }
+    // console.log('dragover', this.item);
     this.recalcIndicator(e);
   }
 
@@ -76,7 +77,9 @@ export class NgDndElementDirective implements AfterViewInit {
   constructor(
     private render2: Renderer2,
     public elementRef: ElementRef,
-    private dnd: NgDragAndDropService ) { }
+    private dnd: NgDragAndDropService ) {
+    console.warn(this.render2);
+  }
 
   calcPosition(offsetX: number, offsetY: number): DragIndicatorPosition {
     const H = this.elementRef.nativeElement.offsetHeight;
@@ -98,6 +101,8 @@ export class NgDndElementDirective implements AfterViewInit {
   }
 
   recalcIndicator(e: DragEvent): void {
+    console.log('----------------recalcIndicator--------------');
+
     const position = this.calcPosition(e.offsetX, e.offsetY);
 
     if (!position) return;
@@ -109,12 +114,15 @@ export class NgDndElementDirective implements AfterViewInit {
 
     const neighbors = this.getNeighbors(this.item);
 
+    console.log('neighbors', neighbors);
+
     let minLvl, maxLvl;
 
     if (position == 'bottom') {
       const tmp = this.dnd.calcPermissionLevelsBetweenContainers(this.item, neighbors.after);
       minLvl = tmp.minLvl;
       maxLvl = tmp.maxLvl;
+      console.log(this.item, neighbors.after, minLvl, maxLvl);
     }
 
     if (position == 'top') {
@@ -132,6 +140,7 @@ export class NgDndElementDirective implements AfterViewInit {
       lvl = Math.min(lvl, maxLvl);
     }
 
+    console.log('setIndicator', this.item, position, lvl);
     this.dnd.setIndicator(this, position, lvl);
   }
 

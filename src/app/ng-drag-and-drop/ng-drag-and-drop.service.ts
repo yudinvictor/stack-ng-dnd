@@ -39,7 +39,9 @@ export class NgDragAndDropService {
 
   private render2: Renderer2;
   constructor(rendererFactory: RendererFactory2) {
+    // console.error('constructor NgDragAndDropService');
     this.render2 = rendererFactory.createRenderer(null, null);
+    // console.error('constructor end NgDragAndDropService');
     this.indicator = new DndIndicator(this, this.render2);
   }
 
@@ -109,6 +111,7 @@ export class NgDragAndDropService {
   getPermissibleLevels(before, after): {minLvl: number, maxLvl: number} {
     const beforeLvl = this.getLevel(before);
     const afterLvl = this.getLevel(after);
+    console.log('getPermissibleLevels', beforeLvl, afterLvl);
 
     if (beforeLvl == null) {
       return {minLvl: 0, maxLvl: 0};

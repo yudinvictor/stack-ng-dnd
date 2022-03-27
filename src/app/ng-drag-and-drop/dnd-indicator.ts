@@ -13,6 +13,7 @@ export class DndIndicator {
     private dnd: NgDragAndDropService,
     private render2: Renderer2,
   ) {
+    console.log(this.render2);
   }
 
   setPosition(position: DragIndicatorPosition): void {
@@ -35,6 +36,8 @@ export class DndIndicator {
   }
 
   setLvl(lvl: number): void {
+    if (!this.indicatorElement) return;
+
     const totalShift = lvl * this.dnd.config.offsetOneLvlPx;
     this.render2.setStyle(this.indicatorElement, 'margin-left', String(totalShift) + 'px');
 
@@ -47,7 +50,7 @@ export class DndIndicator {
       return;
     }
 
-    if (this.parent != parent) {
+    if (this.parent != parent || !this.indicatorElement) {
       this.removeIndicator();
       this.createIndicator(parent, position, level);
     }
@@ -58,13 +61,15 @@ export class DndIndicator {
 
 
   createIndicator(parent: HTMLElement, position: DragIndicatorPosition, level: number): void {
-    if (!this.indicatorElement) return;
+    if (this.indicatorElement) return;
+
+    console.error('createIndicator')
 
     this.parent = parent;
     this.position = position;
     this.level = level;
 
-    this.render2.setStyle(parent, 'z-index', '149999');
+    this.render2.setStyle(parent.parentElement, 'z-index', '149999');
 
     this.indicatorElement = this.render2.createElement("div");
     this.render2.addClass(this.indicatorElement, "DndIndicator");
@@ -75,7 +80,7 @@ export class DndIndicator {
   removeIndicator(): void {
     if (!this.indicatorElement) return;
 
-    this.render2.removeStyle(this.parent, 'z-index');
+    this.render2.removeStyle(this.parent.parentElement, 'z-index');
     this.render2.removeChild(this.parent, this.indicatorElement);
 
     this.indicatorElement = null;
