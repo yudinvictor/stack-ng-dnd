@@ -1,0 +1,99 @@
+
+
+
+<div class="container">
+
+<!--  -->
+
+  <div class="example-list">
+    <div *ngFor="let item of items; let i = index"
+         [style]="{'transform' : 'translateY(' + (i * 40) + 'px )'}"
+         class="wrap-example-item">
+
+      <div
+        [style.padding-left.px]="12 * item.lvl"
+
+        ngDragContainer
+        [dndId]="item.id"
+
+        [dndContainerName]="item.type"
+        [dndContainerData]="item"
+        [dndContainerLvl]="item.lvl"
+        [checkIsParent]="checkIsParent"
+        [getNeighbors]="getNeighbors"
+
+        ngDragItem
+        [dragItemConfig]="dndConfig"
+
+        (drop)="drop(item, $event)"
+        class="example-item">
+        <app-example-item [item]="item"></app-example-item>
+      </div>
+    </div>
+
+<!--    <div *ngFor="let item of items"-->
+<!--         [style.padding-left.px]="12 * item.lvl"-->
+
+<!--         ngDragContainer-->
+<!--         [dndId]="item.id"-->
+
+<!--         [dndContainerName]="item.type"-->
+<!--         [dndContainerData]="item"-->
+<!--         [dndContainerLvl]="item.lvl"-->
+<!--         [checkIsParent]="checkIsParent"-->
+
+<!--         ngDragItem-->
+<!--         [dragItemConfig]="dndConfig"-->
+
+<!--         (drop)="drop(item, $event)"-->
+
+<!--         class="example-item">-->
+<!--      <app-example-item [item]="item"></app-example-item>-->
+<!--    </div>-->
+  </div>
+
+<!--  <div class="channel-list">-->
+<!--    <div *ngFor="let channel of channels"-->
+<!--         ngDragContainer-->
+<!--         ngDragItem-->
+<!--         [dragItemConfig]="channelDndConfig"-->
+<!--         [dndData]="channel"-->
+<!--         [dndLvl]="channel"-->
+<!--         dragContainerName="channel"-->
+<!--         class="channel-item"> Channel {{channel}} </div>-->
+<!--  </div>-->
+
+<!--  <div class="task-list">-->
+<!--    <div *ngFor="let task of tasks"-->
+<!--         ngDragItem-->
+<!--         [dragItemConfig]="taskDndConfig"-->
+<!--         [dndData]="task"-->
+
+<!--         ngDragContainer-->
+<!--         dragContainerName="task"-->
+
+<!--         [dndLvl]="task.lvl"-->
+<!--         (drop)="drop(task, $event)"-->
+
+<!--         class="task-item">-->
+
+<!--      <app-task [task]="task"></app-task>-->
+
+<!--    </div>-->
+<!--  </div>-->
+</div>
+
+
+<!--<div class="containers">-->
+<!--  <div *ngFor="let item of items"-->
+<!--       ngDragContainer-->
+<!--       [dragContainerName]="item"-->
+<!--    class="container">-->
+<!--    {{item}}-->
+<!--  </div>-->
+<!--</div>-->
+
+<!--<div-->
+<!--     ngDragItem-->
+<!--     [dragItemConfig]="tstConfig"-->
+<!--     class="drag-item">A da</div>-->

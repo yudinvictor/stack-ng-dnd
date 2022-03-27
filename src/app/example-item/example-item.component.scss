@@ -1,0 +1,18 @@
+.example-item {
+  //background-color: #fafafa;
+  height: 40px;
+  border-radius: 4px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.folder {
+  background-color: lightblue;
+}
+
+.channel {
+  background-color: navajowhite;
+}

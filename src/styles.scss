@@ -1,1 +1,56 @@
 /* You can add global styles to this file, and also import other style files */
+
+.DndIndicator {
+  position: absolute;
+  z-index: 1000;
+  --color-indicator: #7957FF;
+  background-color: var(--color-indicator);
+  content: '';
+  pointer-events: none;
+  border-radius: 4px;
+  --weight-indicator: 2px;
+}
+
+.DndIndicator--bottom {
+  bottom: calc(-1 * var(--weight-indicator) / 2);
+  left: 0;
+  right: 0;
+  height: var(--weight-indicator);
+}
+
+.DndIndicator--top {
+  top: calc(-1 * var(--weight-indicator) / 2);
+  left: 0;
+  right: 0;
+  height: var(--weight-indicator);
+}
+
+.DndIndicator--right {
+  right: 0px;
+  top: 0;
+  bottom: 0;
+  width: var(--weight-indicator);
+}
+
+.DndIndicator--left {
+  left: 0px;
+  top: 0;
+  bottom: 0;
+  width: var(--weight-indicator);
+}
+
+.DndIndicator--inside {
+  top: calc(-1 * var(--weight-indicator) / 2);
+  bottom: calc(-1 * var(--weight-indicator) / 2);
+  left: calc(-1 * var(--weight-indicator) / 2);
+  right: calc(-1 * var(--weight-indicator) / 2);
+  background-color: transparent;
+  border: var(--color-indicator) solid blueviolet;
+}
+
+.TasksDragIndicatorIconTriangle {
+  transition: 0s;
+  position: absolute;
+  left: -3px;
+  top: -3px;
+}
