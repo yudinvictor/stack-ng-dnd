@@ -78,7 +78,6 @@ export class NgDndElementDirective implements AfterViewInit {
     private render2: Renderer2,
     public elementRef: ElementRef,
     private dnd: NgDragAndDropService ) {
-    console.warn(this.render2);
   }
 
   calcPosition(offsetX: number, offsetY: number): DragIndicatorPosition {
@@ -101,7 +100,7 @@ export class NgDndElementDirective implements AfterViewInit {
   }
 
   recalcIndicator(e: DragEvent): void {
-    console.log('----------------recalcIndicator--------------');
+    // console.log('----------------recalcIndicator--------------');
 
     const position = this.calcPosition(e.offsetX, e.offsetY);
 
@@ -114,7 +113,7 @@ export class NgDndElementDirective implements AfterViewInit {
 
     const neighbors = this.getNeighbors(this.item);
 
-    console.log('neighbors', neighbors);
+    // console.log('neighbors', neighbors);
 
     let minLvl, maxLvl;
 
@@ -122,7 +121,6 @@ export class NgDndElementDirective implements AfterViewInit {
       const tmp = this.dnd.calcPermissionLevelsBetweenContainers(this.item, neighbors.after);
       minLvl = tmp.minLvl;
       maxLvl = tmp.maxLvl;
-      console.log(this.item, neighbors.after, minLvl, maxLvl);
     }
 
     if (position == 'top') {
@@ -140,7 +138,7 @@ export class NgDndElementDirective implements AfterViewInit {
       lvl = Math.min(lvl, maxLvl);
     }
 
-    console.log('setIndicator', this.item, position, lvl);
+    // console.log('setIndicator', this.item, position, lvl);
     this.dnd.setIndicator(this, position, lvl);
   }
 

@@ -134,7 +134,7 @@ export class TstContainerComponent implements OnInit {
   }
 
   dndConfig: DragItemConfig = {
-    offsetOneLvlPx: 8,
+    offsetOneLvlPx: 12,
     containers: {
       Folder: {
         positions: ['bottom', 'top'],

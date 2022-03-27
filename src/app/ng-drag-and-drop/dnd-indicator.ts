@@ -63,11 +63,9 @@ export class DndIndicator {
   createIndicator(parent: HTMLElement, position: DragIndicatorPosition, level: number): void {
     if (this.indicatorElement) return;
 
-    console.error('createIndicator')
-
     this.parent = parent;
-    this.position = position;
-    this.level = level;
+    this.position = null;
+    this.level = null;
 
     this.render2.setStyle(parent.parentElement, 'z-index', '149999');
 

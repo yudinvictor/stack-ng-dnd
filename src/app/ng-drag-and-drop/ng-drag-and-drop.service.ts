@@ -30,7 +30,8 @@ export class NgDragAndDropService {
 
   target: DndTargetContainer;
 
-  activeItem: NgDndElementDirective;
+  activeItem: DndItem;
+  activeItemRef: NgDndElementDirective;
 
   indicator: DndIndicator;
 
@@ -56,7 +57,8 @@ export class NgDragAndDropService {
   }
 
   startDnd(activeItemRef: NgDndElementDirective, event: DragEvent): void {
-    this.activeItem = activeItemRef;
+    this.activeItem = activeItemRef.item;
+    this.activeItemRef = activeItemRef;
     this.config = activeItemRef.dndConfig;
 
     this.CURSOR_CLIENT_START_POSITION.x = event.clientX;
@@ -90,13 +92,17 @@ export class NgDragAndDropService {
   }
 
   getLevel(item: DndItem): number {
-    if (item == null) return -1;
-    return this.getLevel(this.getParent(item)) + 1;
+    if (item == null) return null;
+
+    const parent = this.getParent(item);
+    if (parent == null) return 0;
+
+    return this.getLevel(parent) + 1;
   }
 
   getMouseLvl(clientX: number, clientY: number): number {
     const offsetOneLvl = this.config.offsetOneLvlPx;
-    const level = this.getLevel(this.activeItem.item);
+    const level = this.getLevel(this.activeItem);
 
     if (clientX < this.CURSOR_CLIENT_START_POSITION.x) {
       const len = this.CURSOR_CLIENT_START_POSITION.x - clientX;
@@ -111,7 +117,7 @@ export class NgDragAndDropService {
   getPermissibleLevels(before, after): {minLvl: number, maxLvl: number} {
     const beforeLvl = this.getLevel(before);
     const afterLvl = this.getLevel(after);
-    console.log('getPermissibleLevels', beforeLvl, afterLvl);
+    // console.log('getPermissibleLevels', beforeLvl, afterLvl);
 
     if (beforeLvl == null) {
       return {minLvl: 0, maxLvl: 0};
