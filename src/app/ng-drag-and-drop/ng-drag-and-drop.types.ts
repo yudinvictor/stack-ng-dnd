@@ -11,20 +11,30 @@ export interface DragItemConfig {
   containers: {[key: string] : DragItemConfigInContainer}
 }
 
-export interface DndResultDataNeighbors {
-  id: any;
+export interface DndContainerResult {
+  item: DndItem;
   data: any;
-  HTMLElement: HTMLElement;
   lvl: number;
-  containerName: string;
+  type: string;
 }
 
 export interface DndResult {
+  draggableItem: DndContainerResult;
+
   position: DragIndicatorPosition;
-  lvl?: number;
-  before: DndResultDataNeighbors;
-  target: DndResultDataNeighbors;
-  after: DndResultDataNeighbors;
+  level: number;
+  target: DndContainerResult;
+
+  between: {
+    before: DndContainerResult;
+    after: DndContainerResult;
+  }
+
+  nested: {
+    parent: DndContainerResult;
+    before: DndContainerResult;
+    after: DndContainerResult;
+  }
 }
 
 export type DndItem = any;

@@ -68,8 +68,13 @@ export class NgDndElementDirective implements AfterViewInit {
 
   @HostListener('dragend', ['$event']) dragend(e: DragEvent): void {
     console.log('dragend');
-    // const res = this.dndService.getResult();
-    // this.drop.emit(res);
+
+    const res = this.dnd.getResult();
+    if (res) {
+      this.drop.emit(res);
+    }
+
+    this.dnd.endDndSession();
   }
 
   item: any;
@@ -112,6 +117,7 @@ export class NgDndElementDirective implements AfterViewInit {
     }
 
     const neighbors = this.getNeighbors(this.item);
+
 
     // console.log('neighbors', neighbors);
 

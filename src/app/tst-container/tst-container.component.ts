@@ -18,6 +18,9 @@ export interface Item {
   styleUrls: ['./tst-container.component.scss']
 })
 export class TstContainerComponent implements OnInit {
+  identify(index, item){
+    return item.id;
+  }
 
   items: Array<Item> = [
     {
@@ -146,8 +149,20 @@ export class TstContainerComponent implements OnInit {
   }
 
 
-  drop(item: Item, data: DndResult): void {
-    console.log(data);
+  drop(event: DndResult): void {
+    console.log(event);
+
+    const newIdx = calcIndexInDragDrop(event.nested.before, event.nested.after);
+
+    const id = event.draggableItem.item.id;
+    const newParent = event.nested.parent;
+    console.error(newParent);
+
+    const idx = this.items.findIndex(e => e.id == id);
+    this.items[idx].parent_id = newParent.item.id;
+    this.items[idx].index = newIdx;
+
+    this.items = this.nestedStructureStraightening(this.items);
   }
 
   constructor() { }
@@ -156,4 +171,28 @@ export class TstContainerComponent implements OnInit {
     this.items = this.nestedStructureStraightening(this.items);
   }
 
+}
+
+export function calcIndexInDragDrop(before: any, after: any): number {
+  if (!before && !after) {
+    return 131072 + Math.random();
+  }
+
+  if (!before) {
+    return Math.min(after.index / 2, after.index * 2) - (Math.random());
+  }
+
+  if (!after) {
+    return before.index + 131072 + Math.random();
+  }
+
+  return generateRandomNumber(before.index, after.index);
+}
+
+export function generateRandomNumber(min: number, max: number): number {
+  let res = Math.random();
+  while (res == 0) {
+    res = Math.random();
+  }
+  return res * (max - min) + min;
 }

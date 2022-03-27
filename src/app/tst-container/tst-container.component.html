@@ -6,7 +6,7 @@
 <!--  -->
 
   <div class="example-list">
-    <div *ngFor="let item of items; let i = index"
+    <div *ngFor="let item of items; let i = index; trackBy: identify"
          [style]="{'transform' : 'translateY(' + (i * 40) + 'px )'}"
          class="wrap-example-item">
 
@@ -23,6 +23,8 @@
         draggable="true"
 
         [dndConfig]="dndConfig"
+        (drop)="drop($event)"
+
         class="example-item">
         <app-example-item [item]="item"></app-example-item>
       </div>

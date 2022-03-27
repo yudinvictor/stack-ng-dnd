@@ -1,8 +1,8 @@
-import {Injectable, Input, Renderer2, RendererFactory2} from '@angular/core';
-import {max, min} from "rxjs";
+import {Injectable, Renderer2, RendererFactory2} from '@angular/core';
 import {
+  DndContainerResult,
   DndItem,
-  DndResult, DndResultDataNeighbors,
+  DndResult,
   DragIndicatorPosition,
   DragItemConfig,
   DragItemConfigInContainer
@@ -65,6 +65,10 @@ export class NgDragAndDropService {
     this.CURSOR_CLIENT_START_POSITION.y = event.clientY;
   }
 
+  endDndSession(): void {
+    this.setIndicator(null, null, -1);
+  }
+
   setDndContainer(refDirective: NgDndElementDirective): void {
     this.target = {
       item: refDirective.item,
@@ -88,7 +92,8 @@ export class NgDragAndDropService {
         ref: containerRef,
       }
     }
-    this.indicator.updateIndicator(containerRef.elementRef.nativeElement, position, level);
+
+    this.indicator.updateIndicator(containerRef?.elementRef?.nativeElement, position, level);
   }
 
   getLevel(item: DndItem): number {
@@ -171,5 +176,119 @@ export class NgDragAndDropService {
     }
 
     return {maxLvl, minLvl};
+  }
+
+  getContainerResult(item: DndItem): DndContainerResult {
+    if (item == null) return null;
+
+    return {
+      item,
+      data: this.itemToData.get(item),
+      lvl: this.getLevel(item),
+      type: this.itemToType.get(item),
+    };
+  }
+
+  getResult(): DndResult {
+    if (!this.target || this.target.item == null) return null;
+
+    return {
+      draggableItem: this.getContainerResult(this.activeItem),
+      position: this.target.position,
+      level: this.target.level,
+      target: this.getContainerResult(this.target.item),
+      between: this.getBetweenResult(),
+      nested: this.getNestedResult(),
+    };
+  }
+
+  getBetweenResultItems(): {
+    before: DndItem;
+    after: DndItem;
+  } {
+    const position = this.target.position;
+    const neighbors = this.getNeighbors(this.target.item);
+
+    if (position == 'bottom') {
+      return {
+        before: this.target.item,
+        after: neighbors.after,
+      }
+    }
+
+    if (position == 'top') {
+      return {
+        before: neighbors.before,
+        after: this.target.item,
+      }
+    }
+    return {
+      before: null,
+      after: null,
+    };
+  }
+
+
+  getBetweenResult(): {
+    before: DndContainerResult;
+    after: DndContainerResult;
+  } {
+    const position = this.target.position;
+    const neighbors = this.getNeighbors(this.target.item);
+
+    const {before, after} = this.getBetweenResultItems();
+
+    if (before == null && after == null) return null;
+
+    return {
+      before: this.getContainerResult(before),
+      after: this.getContainerResult(after),
+    }
+  }
+
+  getNestedResult(): {
+    parent: DndContainerResult;
+    before: DndContainerResult;
+    after: DndContainerResult;
+  } {
+    const result = {
+      parent: null,
+      before: null,
+      after: null,
+    };
+
+    const {before, after} = this.getBetweenResultItems();
+
+    if (before == null && after == null) return null;
+
+    const lvl = this.target.level;
+    const position = this.target.position;
+
+    if (this.getLevel(after) == lvl) {
+      result.after = this.getContainerResult(after);
+    }
+
+    if (this.getLevel(before) == lvl - 1) {
+      result.parent = this.getContainerResult(before);
+    } else {
+
+      let linkItem = before;
+
+      while (linkItem) {
+        const lvlLinkItem = this.getLevel(linkItem);
+        if (lvlLinkItem == lvl) {
+          result.before = this.getContainerResult(linkItem);
+        }
+        if (lvlLinkItem == lvl - 1) {
+          result.parent = this.getContainerResult(linkItem);
+        }
+
+        if (lvlLinkItem <= lvl - 2) break;
+
+        linkItem = this.getParent(linkItem);
+      }
+    }
+
+    return result;
   }
 }
