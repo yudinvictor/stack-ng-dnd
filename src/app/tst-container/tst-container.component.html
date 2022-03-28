@@ -4,11 +4,11 @@
 <div class="container">
 
 <!--  -->
-
   <div class="example-list">
-    <div *ngFor="let item of items; let i = index; trackBy: identify"
-         [style]="{'transform' : 'translateY(' + (i * 40) + 'px )'}"
-         class="wrap-example-item">
+    <div *ngFor="let item of items"
+         [style]="{'transform' : 'translate3d(0px, ' + (item.offset) + 'px, 0px)'}"
+         [class.Folder]="item.type == 'Folder'"
+         class="wrap-example-item Move">
 
       <div
         [style.padding-left.px]="12 * item.lvl"

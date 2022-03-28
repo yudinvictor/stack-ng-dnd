@@ -2,7 +2,6 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {CdkDragDrop, moveItemInArray} from "@angular/cdk/drag-drop";
 import {CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 import {DndResult, DragIndicatorPosition, DragItemConfig} from "../ng-drag-and-drop/ng-drag-and-drop.types";
-import {BehaviorSubject, Observable} from "rxjs";
 
 export interface Item {
   id: string;
@@ -10,6 +9,7 @@ export interface Item {
   index: number;
   lvl: number;
   parent_id: string;
+  offset?: number;
 }
 
 @Component({
@@ -74,6 +74,12 @@ export class TstContainerComponent implements OnInit {
     },
   ];
 
+  getHeightElement(item: Item): number {
+    return 40;
+  }
+
+  // outputItems: Array < Item & {coord: nu}>
+
   getParent = (item: any): any => {
     if (!item) return null
 
@@ -106,7 +112,7 @@ export class TstContainerComponent implements OnInit {
     items.sort((a, b) => a.index - b.index);
 
     for (let item of items) {
-      item.lvl = lvl;
+      // item.lvl = lvl;
       res.push(item);
 
       if (g[item.id] && g[item.id].length) {
@@ -152,41 +158,71 @@ export class TstContainerComponent implements OnInit {
   drop(event: DndResult): void {
     console.log(event);
 
-    const newIdx = calcIndexInDragDrop(event.nested.before, event.nested.after);
+    const newIdx = calcIndexInDragDrop(event.nested.before?.item, event.nested.after?.item);
 
     const id = event.draggableItem.item.id;
     const newParent = event.nested.parent;
     console.error(newParent);
 
     const idx = this.items.findIndex(e => e.id == id);
-    this.items[idx].parent_id = newParent.item.id;
+    this.items[idx].parent_id = newParent?.item?.id;
     this.items[idx].index = newIdx;
 
+    this.updateItemPositions(0);
+  }
+
+  recalcLvlAndOffset(): void {
+    let offset = 0;
+
+    const help = new Map<string, number>();
+
+    for (let item of this.items) {
+      item.offset = offset;
+
+      if (item.parent_id == null) {
+        item.lvl = 0;
+      } else {
+        item.lvl = help.get(item.parent_id) + 1;
+      }
+      help.set(item.id, item.lvl);
+
+      offset += 40;
+    }
+  }
+
+  updateItemPositions(delay: number = 0): void {
     this.items = this.nestedStructureStraightening(this.items);
+
+    setTimeout(() => {
+      this.recalcLvlAndOffset();
+    }, 0);
   }
 
   constructor() { }
 
   ngOnInit(): void {
-    this.items = this.nestedStructureStraightening(this.items);
+    this.updateItemPositions();
   }
 
 }
 
 export function calcIndexInDragDrop(before: any, after: any): number {
   if (!before && !after) {
-    return 131072 + Math.random();
+    return 1024;
   }
 
   if (!before) {
-    return Math.min(after.index / 2, after.index * 2) - (Math.random());
+    return after.index / 2;
+    // return Math.min(after.index / 2, after.index * 2) - (Math.random());
   }
 
   if (!after) {
-    return before.index + 131072 + Math.random();
+    return before.index * 2;
+    // return before.index + 131072 + Math.random();
   }
 
-  return generateRandomNumber(before.index, after.index);
+  return (after.index + before.index) / 2;
+  // return generateRandomNumber(before.index, after.index);
 }
 
 export function generateRandomNumber(min: number, max: number): number {

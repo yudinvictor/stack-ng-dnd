@@ -12,7 +12,6 @@
 
 .wrap-example-item {
   position: absolute;
-  transition: 0.2s;
 }
 
 
@@ -21,4 +20,14 @@
 
   width: 180px;
   box-sizing: border-box;
+  height: 40px;
+}
+
+.Move {
+  --shortDuration: 0.5s;
+  transition: top var(--shortDuration) ease-in-out, transform var(--shortDuration) ease-in-out
+}
+
+.Folder {
+  opacity: 0.5;
 }
